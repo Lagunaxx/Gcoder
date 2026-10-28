@@ -1,0 +1,132 @@
+{
+  "version": 1,
+  "function": {
+    "name": "DRILL_GRID",
+    "title": "Массив отверстий сеткой",
+    "description": "Сверлит nx×ny отверстий с шагом step, начиная с (x0,y0).",
+    "params": [
+      {
+        "name": "x0",
+        "default": "0",
+        "description": "Начальный X"
+      },
+      {
+        "name": "y0",
+        "default": "0",
+        "description": "Начальный Y"
+      },
+      {
+        "name": "nx",
+        "default": "3",
+        "description": "Число по X"
+      },
+      {
+        "name": "ny",
+        "default": "3",
+        "description": "Число по Y"
+      },
+      {
+        "name": "step",
+        "default": "10",
+        "description": "Шаг"
+      },
+      {
+        "name": "depth",
+        "default": "-5",
+        "description": "Глубина сверления"
+      },
+      {
+        "name": "f",
+        "default": "80",
+        "description": "Подача сверления"
+      }
+    ],
+    "body": [
+      {
+        "mnemonic": "VAR",
+        "params": {
+          "name": "#310",
+          "value": "0"
+        },
+        "raw": ""
+      },
+      {
+        "mnemonic": "LABEL",
+        "params": {
+          "name": "ROW"
+        },
+        "raw": ""
+      },
+      {
+        "mnemonic": "VAR",
+        "params": {
+          "name": "#311",
+          "value": "0"
+        },
+        "raw": ""
+      },
+      {
+        "mnemonic": "LABEL",
+        "params": {
+          "name": "COL"
+        },
+        "raw": ""
+      },
+      {
+        "mnemonic": "RAPID",
+        "params": {
+          "x": "{x0 + #311*step}",
+          "y": "{y0 + #310*step}",
+          "z": 5
+        },
+        "raw": ""
+      },
+      {
+        "mnemonic": "DRILL",
+        "params": {
+          "x": "{x0 + #311*step}",
+          "y": "{y0 + #310*step}",
+          "z": "{depth}",
+          "f": "{f}"
+        },
+        "raw": ""
+      },
+      {
+        "mnemonic": "VAR_ADD",
+        "params": {
+          "name": "#311",
+          "delta": "1"
+        },
+        "raw": ""
+      },
+      {
+        "mnemonic": "IF",
+        "params": {
+          "lhs": "#311",
+          "op": "LT",
+          "rhs": "{nx}",
+          "target": "COL"
+        },
+        "raw": ""
+      },
+      {
+        "mnemonic": "VAR_ADD",
+        "params": {
+          "name": "#310",
+          "delta": "1"
+        },
+        "raw": ""
+      },
+      {
+        "mnemonic": "IF",
+        "params": {
+          "lhs": "#310",
+          "op": "LT",
+          "rhs": "{ny}",
+          "target": "ROW"
+        },
+        "raw": ""
+      }
+    ]
+  }
+}

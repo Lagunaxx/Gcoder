@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "function": {
+    "name": "TOOL_CHANGE",
+    "title": "Безопасная смена инструмента",
+    "description": "Останов шпинделя, охлаждения, отвод на Z10, M6.",
+    "params": [
+      {
+        "name": "t",
+        "default": "1",
+        "description": "Номер инструмента"
+      },
+      {
+        "name": "rpm",
+        "default": "8000",
+        "description": "Обороты"
+      }
+    ],
+    "body": [
+      {
+        "mnemonic": "SPIN",
+        "params": {
+          "on": 0,
+          "rpm": 0,
+          "ccw": 0
+        },
+        "raw": ""
+      },
+      {
+        "mnemonic": "COOL",
+        "params": {
+          "on": 0,
+          "mist": 0
+        },
+        "raw": ""
+      },
+      {
+        "mnemonic": "RAPID",
+        "params": {
+          "x": 0,
+          "y": 0,
+          "z": 10
+        },
+        "raw": ""
+      },
+      {
+        "mnemonic": "TOOL",
+        "params": {
+          "tool": "{t}"
+        },
+        "raw": ""
+      },
+      {
+        "mnemonic": "SPIN",
+        "params": {
+          "on": 1,
+          "rpm": "{rpm}",
+          "ccw": 0
+        },
+        "raw": ""
+      }
+    ]
+  }
+}

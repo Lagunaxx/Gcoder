@@ -1,0 +1,118 @@
+{
+  "version": 1,
+  "function": {
+    "name": "POCKET_RECT",
+    "title": "Прямоугольный карман (зигзаг)",
+    "description": "Фрезерует прямоугольник x0..x1, y0..y1 с шагом step на глубине z.",
+    "params": [
+      {
+        "name": "x0",
+        "default": "0",
+        "description": "Начало X"
+      },
+      {
+        "name": "y0",
+        "default": "0",
+        "description": "Начало Y"
+      },
+      {
+        "name": "x1",
+        "default": "50",
+        "description": "Конец X"
+      },
+      {
+        "name": "y1",
+        "default": "50",
+        "description": "Конец Y"
+      },
+      {
+        "name": "step",
+        "default": "3",
+        "description": "Шаг строк"
+      },
+      {
+        "name": "z",
+        "default": "-1",
+        "description": "Глубина"
+      },
+      {
+        "name": "f",
+        "default": "150",
+        "description": "Подача"
+      }
+    ],
+    "body": [
+      {
+        "mnemonic": "VAR",
+        "params": {
+          "name": "#320",
+          "value": "0"
+        },
+        "raw": ""
+      },
+      {
+        "mnemonic": "LABEL",
+        "params": {
+          "name": "ROW"
+        },
+        "raw": ""
+      },
+      {
+        "mnemonic": "RAPID",
+        "params": {
+          "x": "{x0}",
+          "y": "{y0 + #320*step}",
+          "z": 5
+        },
+        "raw": ""
+      },
+      {
+        "mnemonic": "FEED",
+        "params": {
+          "x": "{x0}",
+          "y": "{y0 + #320*step}",
+          "z": "{z}",
+          "f": "{f}"
+        },
+        "raw": ""
+      },
+      {
+        "mnemonic": "FEED",
+        "params": {
+          "x": "{x1}",
+          "y": "{y0 + #320*step}",
+          "z": "{z}",
+          "f": "{f}"
+        },
+        "raw": ""
+      },
+      {
+        "mnemonic": "RAPID",
+        "params": {
+          "x": "{x1}",
+          "y": "{y0 + #320*step}",
+          "z": 5
+        },
+        "raw": ""
+      },
+      {
+        "mnemonic": "VAR_ADD",
+        "params": {
+          "name": "#320",
+          "delta": "1"
+        },
+        "raw": ""
+      },
+      {
+        "mnemonic": "IF",
+        "params": {
+          "lhs": "{y0 + #320*step}",
+          "op": "LE",
+          "rhs": "{y1}",
+          "target": "ROW"
+        },
+        "raw": ""
+      }
+    ]
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Mach3 G-Code",
+  "description": "Интуитивный визуальный редактор псевдокода, генератор G-кода Mach3 и интерактивная 3D-симуляция фрезерования.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
