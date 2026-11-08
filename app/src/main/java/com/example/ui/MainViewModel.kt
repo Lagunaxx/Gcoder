@@ -312,7 +312,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun updateGridSize(sizeMm: Double) {
-        settings.value = settings.value.copy(voxelXy = sizeMm.coerceIn(0.3, 10.0), autoVoxelXy = false)
+        settings.value = settings.value.copy(voxelXy = sizeMm.coerceIn(0.1, 20.0), autoVoxelXy = false)
         recalculate()
     }
 

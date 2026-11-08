@@ -19,6 +19,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import java.util.Locale
 import com.example.model.*
 
 @Composable
@@ -384,33 +387,89 @@ fun MoreTab(
                                 )
 
                                 Spacer(modifier = Modifier.height(8.dp))
-                                Text("Размер ячейки сетки (детализация): ${"%.1f".format(settings.voxelXy)} мм", color = Color(0xFF38BDF8), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                                Slider(
-                                    value = settings.voxelXy.toFloat().coerceIn(0.5f, 5.0f),
-                                    onValueChange = { onUpdateSettings(settings.copy(voxelXy = it.toDouble(), autoVoxelXy = false)) },
-                                    valueRange = 0.5f..5.0f,
-                                    colors = SliderDefaults.colors(thumbColor = Color(0xFF38BDF8), activeTrackColor = Color(0xFF0284C7))
-                                )
-                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    listOf(
-                                        Pair(0.5, "0.5 мм"),
-                                        Pair(1.0, "1.0 мм"),
-                                        Pair(1.5, "1.5 мм"),
-                                        Pair(3.0, "3.0 мм")
-                                    ).forEach { (size, label) ->
-                                        val isSel = kotlin.math.abs(settings.voxelXy - size) < 0.1
-                                        FilterChip(
-                                            selected = isSel,
-                                            onClick = { onUpdateSettings(settings.copy(voxelXy = size, autoVoxelXy = false)) },
-                                            label = { Text(label, fontSize = 10.sp) },
-                                            colors = FilterChipDefaults.filterChipColors(
-                                                selectedContainerColor = Color(0xFF059669),
-                                                selectedLabelColor = Color.White
-                                            ),
-                                            modifier = Modifier.height(28.dp)
+                                Text("Размер ячейки сетки (вводимая величина):", color = Color(0xFF38BDF8), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                var gridInputText by remember(settings.voxelXy) {
+                                    mutableStateOf(String.format(Locale.US, "%.2f", settings.voxelXy).trimEnd('0').trimEnd('.'))
+                                }
+                                val parsedGridInput = gridInputText.replace(',', '.').toDoubleOrNull()
+                                val isGridValid = parsedGridInput != null && parsedGridInput in 0.1..20.0
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    OutlinedTextField(
+                                        value = gridInputText,
+                                        onValueChange = {
+                                            gridInputText = it
+                                            val p = it.replace(',', '.').toDoubleOrNull()
+                                            if (p != null && p in 0.1..20.0) {
+                                                onUpdateSettings(settings.copy(voxelXy = p, autoVoxelXy = false))
+                                            }
+                                        },
+                                        label = { Text("Размер ячейки (мм)") },
+                                        placeholder = { Text("например: 1.0 или 0.75") },
+                                        singleLine = true,
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                        isError = !isGridValid && gridInputText.isNotBlank(),
+                                        modifier = Modifier.weight(1f),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedTextColor = Color.White,
+                                            unfocusedTextColor = Color.White,
+                                            focusedBorderColor = Color(0xFF38BDF8),
+                                            unfocusedBorderColor = Color(0xFF475569)
                                         )
+                                    )
+
+                                    Spacer(modifier = Modifier.width(6.dp))
+
+                                    // Stepper -0.1
+                                    Button(
+                                        onClick = {
+                                            val cur = parsedGridInput ?: settings.voxelXy
+                                            val updated = (cur - 0.1).coerceIn(0.1, 20.0)
+                                            gridInputText = String.format(Locale.US, "%.2f", updated).trimEnd('0').trimEnd('.')
+                                            onUpdateSettings(settings.copy(voxelXy = updated, autoVoxelXy = false))
+                                        },
+                                        contentPadding = PaddingValues(0.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF334155)),
+                                        shape = RoundedCornerShape(8.dp),
+                                        modifier = Modifier
+                                            .size(44.dp)
+                                            .padding(top = 4.dp)
+                                    ) {
+                                        Text("-0.1", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                    }
+
+                                    Spacer(modifier = Modifier.width(4.dp))
+
+                                    // Stepper +0.1
+                                    Button(
+                                        onClick = {
+                                            val cur = parsedGridInput ?: settings.voxelXy
+                                            val updated = (cur + 0.1).coerceIn(0.1, 20.0)
+                                            gridInputText = String.format(Locale.US, "%.2f", updated).trimEnd('0').trimEnd('.')
+                                            onUpdateSettings(settings.copy(voxelXy = updated, autoVoxelXy = false))
+                                        },
+                                        contentPadding = PaddingValues(0.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF334155)),
+                                        shape = RoundedCornerShape(8.dp),
+                                        modifier = Modifier
+                                            .size(44.dp)
+                                            .padding(top = 4.dp)
+                                    ) {
+                                        Text("+0.1", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
                                     }
                                 }
+
+                                Text(
+                                    text = "Задается числом в миллиметрах (от 0.1 до 20.0 мм). Меньший шаг повышает детализацию 3D среза, больший — ускоряет симуляцию.",
+                                    color = Color(0xFF94A3B8),
+                                    fontSize = 11.sp,
+                                    lineHeight = 15.sp,
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
 
                                 Spacer(modifier = Modifier.height(6.dp))
 

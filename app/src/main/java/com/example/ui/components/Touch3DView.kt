@@ -91,10 +91,12 @@ fun Touch3DView(
     onChangeShadingMode: (ShadingMode) -> Unit = {},
     onChangeTransparency: (Float) -> Unit = {},
     onChangeGridSize: (Double) -> Unit = {},
+    onOpenGridDialog: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val textMeasurer = rememberTextMeasurer()
     var showQuickSettings by remember { mutableStateOf(false) }
+    var showInternalGridDialog by remember { mutableStateOf(false) }
 
     // Reusable single Path instance to prevent Skia native memory leaks during 60fps rotation
     val reusablePath = remember { Path() }
@@ -433,7 +435,7 @@ fun Touch3DView(
 
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    // Row 2: Grid Cell Size / Detail Tuning (Requirement 3)
+                    // Row 2: Grid Cell Size - Direct input (not fixed presets)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
@@ -442,40 +444,73 @@ fun Touch3DView(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text("Ячейка сетки:", color = Color(0xFF94A3B8), fontSize = 11.sp)
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "%.1f мм".format(gridSizeMm),
-                                color = Color(0xFF38BDF8),
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-
-                        // Grid Presets: 0.5mm (Ultra), 1.0mm (High), 1.5mm (Default), 3.0mm (Fast)
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            val gridPresets = listOf(
-                                Pair(0.5, "0.5"),
-                                Pair(1.0, "1.0"),
-                                Pair(1.5, "1.5"),
-                                Pair(3.0, "3.0")
-                            )
-                            for ((sizeMm, label) in gridPresets) {
-                                val isSelected = abs(gridSizeMm - sizeMm) < 0.1
-                                Box(
-                                    modifier = Modifier
-                                        .padding(horizontal = 2.dp)
-                                        .background(
-                                            if (isSelected) Color(0xFF059669) else Color(0xFF0F172A),
-                                            RoundedCornerShape(4.dp)
-                                        )
-                                        .clickable { onChangeGridSize(sizeMm) }
-                                        .padding(horizontal = 5.dp, vertical = 2.dp)
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = Color(0xFF1E293B),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF38BDF8)),
+                                modifier = Modifier.clickable {
+                                    if (onOpenGridDialog != null) onOpenGridDialog() else showInternalGridDialog = true
+                                }
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                 ) {
+                                    Icon(
+                                        Icons.Default.Edit,
+                                        contentDescription = "Ввести размер ячейки",
+                                        tint = Color(0xFF38BDF8),
+                                        modifier = Modifier.size(11.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(3.dp))
                                     Text(
-                                        text = "$label мм",
-                                        color = if (isSelected) Color.White else Color(0xFF94A3B8),
-                                        fontSize = 10.sp
+                                        text = "%.2f мм".format(gridSizeMm),
+                                        color = Color.White,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold
                                     )
                                 }
+                            }
+                        }
+
+                        // Stepper buttons [-0.1] [+0.1] and [Ввести] button for entering any value
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(26.dp)
+                                    .background(Color(0xFF334155), RoundedCornerShape(4.dp))
+                                    .clickable {
+                                        val next = (gridSizeMm - 0.1).coerceIn(0.1, 20.0)
+                                        onChangeGridSize(next)
+                                    }
+                            ) {
+                                Text("-0.1", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                            }
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(26.dp)
+                                    .background(Color(0xFF334155), RoundedCornerShape(4.dp))
+                                    .clickable {
+                                        val next = (gridSizeMm + 0.1).coerceIn(0.1, 20.0)
+                                        onChangeGridSize(next)
+                                    }
+                            ) {
+                                Text("+0.1", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                            }
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Button(
+                                onClick = {
+                                    if (onOpenGridDialog != null) onOpenGridDialog() else showInternalGridDialog = true
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0284C7)),
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                shape = RoundedCornerShape(6.dp),
+                                modifier = Modifier.height(26.dp)
+                            ) {
+                                Text("Ввести", fontSize = 10.sp, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -511,6 +546,19 @@ fun Touch3DView(
                 }
             }
         }
+    }
+
+    if (showInternalGridDialog) {
+        com.example.ui.dialogs.GridDialog(
+            initialSizeMm = gridSizeMm,
+            stockWidth = stock?.x ?: 100.0,
+            stockHeight = stock?.y ?: 80.0,
+            onDismiss = { showInternalGridDialog = false },
+            onConfirm = {
+                onChangeGridSize(it)
+                showInternalGridDialog = false
+            }
+        )
     }
 }
 

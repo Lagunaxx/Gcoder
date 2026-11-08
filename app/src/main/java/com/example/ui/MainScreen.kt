@@ -186,7 +186,8 @@ fun MainScreen(viewModel: MainViewModel) {
                                 onToggleMaterial = { viewModel.toggleShowMaterial(it) },
                                 onChangeShadingMode = { viewModel.updateShadingMode(it) },
                                 onChangeTransparency = { viewModel.updateTransparency(it) },
-                                onChangeGridSize = { viewModel.updateGridSize(it) }
+                                onChangeGridSize = { viewModel.updateGridSize(it) },
+                                onOpenGridDialog = { showGridSettingsDialog = true }
                             )
                         }
                         PlayController(
@@ -298,7 +299,8 @@ fun MainScreen(viewModel: MainViewModel) {
                                 onToggleMaterial = { viewModel.toggleShowMaterial(it) },
                                 onChangeShadingMode = { viewModel.updateShadingMode(it) },
                                 onChangeTransparency = { viewModel.updateTransparency(it) },
-                                onChangeGridSize = { viewModel.updateGridSize(it) }
+                                onChangeGridSize = { viewModel.updateGridSize(it) },
+                                onOpenGridDialog = { showGridSettingsDialog = true }
                             )
                         }
                         PlayController(
@@ -415,6 +417,7 @@ fun MainScreen(viewModel: MainViewModel) {
             onOpenTools = { activeWorkTab = 2 },
             onOpenFunctions = { activeWorkTab = 4 },
             onOpenSettings = { activeWorkTab = 4 },
+            onOpenGridDialog = { showGridSettingsDialog = true },
             onOpenHelp = { showHelpDialog = true },
             onRegenerate = {
                 viewModel.recalculate()
@@ -538,6 +541,21 @@ fun MainScreen(viewModel: MainViewModel) {
                 }
             },
             containerColor = Color(0xFF1E293B)
+        )
+    }
+
+    // Grid Size Dialog (Direct numeric input)
+    if (showGridSettingsDialog) {
+        GridDialog(
+            initialSizeMm = settings.voxelXy,
+            stockWidth = stock?.x ?: 100.0,
+            stockHeight = stock?.y ?: 80.0,
+            onDismiss = { showGridSettingsDialog = false },
+            onConfirm = { newSize ->
+                viewModel.updateGridSize(newSize)
+                showGridSettingsDialog = false
+                Toast.makeText(context, "Размер ячейки сетки установлен: $newSize мм", Toast.LENGTH_SHORT).show()
+            }
         )
     }
 }

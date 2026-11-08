@@ -32,6 +32,7 @@ fun MainMenuSheet(
     onOpenTools: () -> Unit,
     onOpenFunctions: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenGridDialog: () -> Unit,
     onOpenHelp: () -> Unit,
     onRegenerate: () -> Unit
 ) {
@@ -150,10 +151,10 @@ fun MainMenuSheet(
             )
             MenuItem(
                 icon = Icons.Default.GridOn,
-                title = "Настройка сетки (детализация)",
-                subtitle = "Размер ячейки, качество и скорость симуляции",
+                title = "Размер ячейки сетки (ввод величины)",
+                subtitle = "Задать точный размер ячейки фрезерования (мм)",
                 tint = Color(0xFF38BDF8),
-                onClick = { onDismiss(); onOpenSettings() }
+                onClick = { onDismiss(); onOpenGridDialog() }
             )
             MenuItem(
                 icon = Icons.Default.Tune,

@@ -15,9 +15,9 @@ class HeightMap(
     val w = max(xMax - xMin, 1e-4)
     val h = max(yMax - yMin, 1e-4)
 
-    // Optimal grid resolution for fast real-time 3D rendering on mobile
-    val nx = max(1, ceil(w / max(voxelXy, 1.0)).toInt()).coerceIn(20, 80)
-    val ny = max(1, ceil(h / max(voxelXy, 1.0)).toInt()).coerceIn(20, 80)
+    // Optimal grid resolution calculated directly from user-entered cell size (mm)
+    val nx = max(1, ceil(w / max(voxelXy, 0.1)).toInt()).coerceIn(10, 100)
+    val ny = max(1, ceil(h / max(voxelXy, 0.1)).toInt()).coerceIn(10, 100)
 
     val dx = w / nx
     val dy = h / ny
