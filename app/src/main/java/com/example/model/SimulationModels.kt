@@ -51,7 +51,7 @@ data class SimulationStats(
 )
 
 data class SimSettings(
-    val autoVoxelXy: Boolean = true,
+    val autoVoxelXy: Boolean = false,
     val voxelXy: Double = 1.5,
     val voxelZ: Double = 1.0,
     val showToolpath: Boolean = true,

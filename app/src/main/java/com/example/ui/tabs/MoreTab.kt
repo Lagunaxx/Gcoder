@@ -500,7 +500,7 @@ fun MoreTab(
                                         colors = CheckboxDefaults.colors(checkedColor = Color(0xFF0284C7))
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Авто-размер сетки (1/3 диаметра фрезы)", color = Color.White, fontSize = 13.sp)
+                                    Text("Авто-подбор сетки по фрезе (ручной ввод отключает)", color = Color.White, fontSize = 13.sp)
                                 }
                             }
                         }

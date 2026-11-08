@@ -271,7 +271,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val b = st.bounds()
         val hm = com.example.sim.HeightMap(
             b[0], b[1], b[2], b[3], b[4], b[5],
-            voxelXy = if (settings.value.autoVoxelXy) 1.5 else settings.value.voxelXy,
+            voxelXy = settings.value.voxelXy,
             voxelZ = settings.value.voxelZ
         )
         for (i in 0..step.coerceIn(0, segs.size - 1)) {
@@ -312,8 +312,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun updateGridSize(sizeMm: Double) {
-        settings.value = settings.value.copy(voxelXy = sizeMm.coerceIn(0.1, 20.0), autoVoxelXy = false)
+        val clamped = sizeMm.coerceIn(0.1, 20.0)
+        settings.value = settings.value.copy(voxelXy = clamped, autoVoxelXy = false)
         recalculate()
+        updateHeightMapForStep(currentStepIndex.value)
     }
 
     fun setSpeed(mult: Float) {

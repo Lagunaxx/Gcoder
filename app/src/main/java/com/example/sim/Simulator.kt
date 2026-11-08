@@ -61,7 +61,7 @@ class Simulator(
         var maxZ = 10.0
 
         val minToolD = tools.values.filter { it.diameter > 0 }.minOfOrNull { it.diameter } ?: 3.0
-        val vxy = if (settings.autoVoxelXy) max(minToolD / 3.0, 0.1) else max(settings.voxelXy, 0.1)
+        val vxy = if (settings.autoVoxelXy) max(minToolD / 3.0, 0.05) else max(settings.voxelXy, 0.05)
         val vz = max(settings.voxelZ, 0.2)
 
         var hm: HeightMap? = null

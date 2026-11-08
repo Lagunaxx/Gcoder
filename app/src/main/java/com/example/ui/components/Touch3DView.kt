@@ -205,6 +205,7 @@ fun Touch3DView(
                     } else {
                         drawStockBox(
                             stock = stock,
+                            gridSizeMm = gridSizeMm,
                             transparency = transparency,
                             shadingMode = shadingMode,
                             reusablePath = reusablePath,
@@ -463,8 +464,13 @@ fun Touch3DView(
                                         modifier = Modifier.size(11.dp)
                                     )
                                     Spacer(modifier = Modifier.width(3.dp))
+                                    val gridLabel = if (heightMap != null) {
+                                        "%.2f мм (%d×%d)".format(gridSizeMm, heightMap.nx, heightMap.ny)
+                                    } else {
+                                        "%.2f мм".format(gridSizeMm)
+                                    }
                                     Text(
-                                        text = "%.2f мм".format(gridSizeMm),
+                                        text = gridLabel,
                                         color = Color.White,
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold
@@ -622,6 +628,7 @@ private fun DrawScope.drawAxes(
 
 private fun DrawScope.drawStockBox(
     stock: Stock,
+    gridSizeMm: Double,
     transparency: Float,
     shadingMode: ShadingMode,
     reusablePath: Path,
@@ -659,6 +666,28 @@ private fun DrawScope.drawStockBox(
             drawPath(reusablePath, color = stockColor)
         }
 
+        // Draw workpiece top surface grid lines according to gridSizeMm
+        val gridLineColor = if (shadingMode == ShadingMode.WIREFRAME) Color(0xFF38BDF8) else Color(0x6694A3B8)
+        val step = gridSizeMm.toFloat().coerceAtLeast(0.1f)
+        var gx = x0
+        while (gx <= x1 + 1e-3f) {
+            val pA = project(gx, y0, z1)
+            val pB = project(gx, y1, z1)
+            if (pA.isValid() && pB.isValid()) {
+                drawLine(gridLineColor, pA, pB, strokeWidth = if (shadingMode == ShadingMode.WIREFRAME) 1.2f else 0.9f)
+            }
+            gx += step
+        }
+        var gy = y0
+        while (gy <= y1 + 1e-3f) {
+            val pA = project(x0, gy, z1)
+            val pB = project(x1, gy, z1)
+            if (pA.isValid() && pB.isValid()) {
+                drawLine(gridLineColor, pA, pB, strokeWidth = if (shadingMode == ShadingMode.WIREFRAME) 1.2f else 0.9f)
+            }
+            gy += step
+        }
+
         val strokeColor = if (shadingMode == ShadingMode.WIREFRAME) Color(0xFF38BDF8) else Color(0x9994A3B8)
         val edges = arrayOf(
             Pair(0, 1), Pair(1, 2), Pair(2, 3), Pair(3, 0),
@@ -694,12 +723,11 @@ private fun DrawScope.drawMilledHeightmap(
     val x0 = hm.xMin
     val y0 = hm.yMin
 
-    val step = if (nx > 45) 2 else 1
     val isWireframe = shadingMode == ShadingMode.WIREFRAME
     val alpha = if (shadingMode == ShadingMode.TRANSPARENT) transparency.coerceIn(0.15f, 0.85f) else 0.90f
 
     val uncutColor = parseHexColor(stock.color, Color(0xFF7080B0)).copy(alpha = alpha)
-    val gridLineColor = if (isWireframe) Color(0xFF38BDF8) else Color(0x4464748B)
+    val gridLineColor = if (isWireframe) Color(0xFF38BDF8) else Color(0x5594A3B8)
 
     // 1. Draw Stock bounding contours
     val p00Bot = project(x0, y0, zBot)
@@ -722,22 +750,51 @@ private fun DrawScope.drawMilledHeightmap(
     if (p11Bot.isValid() && p11Top.isValid()) drawLine(Color(0x6694A3B8), p11Bot, p11Top, strokeWidth = 1.2f)
     if (p01Bot.isValid() && p01Top.isValid()) drawLine(Color(0x6694A3B8), p01Bot, p01Top, strokeWidth = 1.2f)
 
-    // 2. Draw 3D Surface grid and milled facets
-    val maxIx = (nx - step).coerceAtLeast(0)
-    val maxIy = (ny - step).coerceAtLeast(0)
+    // 2. Base top surface of stock
+    if (!isWireframe && p00Top.isValid() && p10Top.isValid() && p11Top.isValid() && p01Top.isValid()) {
+        reusablePath.rewind()
+        reusablePath.moveTo(p00Top.x, p00Top.y)
+        reusablePath.lineTo(p10Top.x, p10Top.y)
+        reusablePath.lineTo(p11Top.x, p11Top.y)
+        reusablePath.lineTo(p01Top.x, p01Top.y)
+        reusablePath.close()
+        drawPath(reusablePath, uncutColor)
+    }
 
-    for (ix in 0 until maxIx step step) {
+    // 3. Draw grid lines on the stock top surface according to dx & dy
+    for (ix in 0..nx) {
+        val gx = x0 + ix * dx
+        val pStart = project(gx, y0, zTop)
+        val pEnd = project(gx, y0 + ny * dy, zTop)
+        if (pStart.isValid() && pEnd.isValid()) {
+            drawLine(gridLineColor, pStart, pEnd, strokeWidth = if (isWireframe) 1.2f else 0.8f)
+        }
+    }
+    for (iy in 0..ny) {
+        val gy = y0 + iy * dy
+        val pStart = project(x0, gy, zTop)
+        val pEnd = project(x0 + nx * dx, gy, zTop)
+        if (pStart.isValid() && pEnd.isValid()) {
+            drawLine(gridLineColor, pStart, pEnd, strokeWidth = if (isWireframe) 1.2f else 0.8f)
+        }
+    }
+
+    // 4. Draw 3D Milled Facets at step = 1 (every voxel accurately rendered matching user grid precision)
+    for (ix in 0 until nx - 1) {
         val px = x0 + ix * dx
-        val pxNext = x0 + (ix + step) * dx
+        val pxNext = px + dx
 
-        for (iy in 0 until maxIy step step) {
+        for (iy in 0 until ny - 1) {
             val py = y0 + iy * dy
-            val pyNext = y0 + (iy + step) * dy
+            val pyNext = py + dy
 
             val z00 = curZ[ix][iy]
-            val z10 = curZ[ix + step][iy]
-            val z11 = curZ[ix + step][iy + step]
-            val z01 = curZ[ix][iy + step]
+            val z10 = curZ[ix + 1][iy]
+            val z11 = curZ[ix + 1][iy + 1]
+            val z01 = curZ[ix][iy + 1]
+
+            val isCut = (z00 < zTop - 0.02 || z10 < zTop - 0.02 || z11 < zTop - 0.02 || z01 < zTop - 0.02)
+            if (!isCut) continue
 
             val pt00 = project(px, py, z00)
             val pt10 = project(pxNext, py, z10)
@@ -745,8 +802,6 @@ private fun DrawScope.drawMilledHeightmap(
             val pt01 = project(px, pyNext, z01)
 
             if (!pt00.isValid() || !pt10.isValid() || !pt11.isValid() || !pt01.isValid()) continue
-
-            val isCut = (z00 < zTop - 0.05 || z10 < zTop - 0.05 || z11 < zTop - 0.05 || z01 < zTop - 0.05)
 
             if (!isWireframe) {
                 reusablePath.rewind()
@@ -756,29 +811,24 @@ private fun DrawScope.drawMilledHeightmap(
                 reusablePath.lineTo(pt01.x, pt01.y)
                 reusablePath.close()
 
-                val cellColor = if (isCut) {
-                    val minLocalZ = minOf(z00, z10, z11, z01)
-                    val depthFrac = (((zTop - minLocalZ) / max(0.1, zTop - zBot)).toFloat()).coerceIn(0f, 1f)
-                    Color(
-                        red = (0.85f - depthFrac * 0.35f).coerceIn(0f, 1f),
-                        green = (0.88f - depthFrac * 0.30f).coerceIn(0f, 1f),
-                        blue = (0.95f - depthFrac * 0.20f).coerceIn(0f, 1f),
-                        alpha = alpha
-                    )
-                } else {
-                    uncutColor
-                }
-
+                val minLocalZ = minOf(z00, z10, z11, z01)
+                val depthFrac = (((zTop - minLocalZ) / max(0.1, zTop - zBot)).toFloat()).coerceIn(0f, 1f)
+                val cellColor = Color(
+                    red = (0.80f - depthFrac * 0.35f).coerceIn(0f, 1f),
+                    green = (0.85f - depthFrac * 0.30f).coerceIn(0f, 1f),
+                    blue = (0.95f - depthFrac * 0.20f).coerceIn(0f, 1f),
+                    alpha = 0.95f
+                )
                 drawPath(reusablePath, cellColor)
             }
 
-            // Grid mesh lines (always on in Wireframe, or subtle on milled areas)
-            if (isWireframe || isCut) {
-                val lineCol = if (isCut) Color(0xFF0284C7) else gridLineColor
-                val lw = if (isCut) 1.5f else 0.9f
-                drawLine(lineCol, pt00, pt10, strokeWidth = lw)
-                drawLine(lineCol, pt00, pt01, strokeWidth = lw)
-            }
+            // Draw cut mesh grid lines for this cell
+            val lineCol = if (isWireframe) Color(0xFF38BDF8) else Color(0xFF0284C7)
+            val lw = if (isWireframe) 1.2f else 1.0f
+            drawLine(lineCol, pt00, pt10, strokeWidth = lw)
+            drawLine(lineCol, pt10, pt11, strokeWidth = lw)
+            drawLine(lineCol, pt11, pt01, strokeWidth = lw)
+            drawLine(lineCol, pt01, pt00, strokeWidth = lw)
         }
     }
 }

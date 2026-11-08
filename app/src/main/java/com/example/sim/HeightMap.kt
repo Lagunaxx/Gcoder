@@ -16,8 +16,8 @@ class HeightMap(
     val h = max(yMax - yMin, 1e-4)
 
     // Optimal grid resolution calculated directly from user-entered cell size (mm)
-    val nx = max(1, ceil(w / max(voxelXy, 0.1)).toInt()).coerceIn(10, 100)
-    val ny = max(1, ceil(h / max(voxelXy, 0.1)).toInt()).coerceIn(10, 100)
+    val nx = max(1, ceil(w / max(voxelXy, 0.05)).toInt()).coerceIn(10, 200)
+    val ny = max(1, ceil(h / max(voxelXy, 0.05)).toInt()).coerceIn(10, 200)
 
     val dx = w / nx
     val dy = h / ny
